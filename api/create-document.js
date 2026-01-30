@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     const doc = await createResponse.json();
     const documentId = doc.documentId;
-    const requests = buildEnhancedFormattingRequests(structure);
+    const requests = buildUSFCRFormattingRequests(structure);
 
     const updateResponse = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
       method: 'POST',
@@ -64,15 +64,21 @@ export default async function handler(req, res) {
   }
 }
 
-function buildEnhancedFormattingRequests(structure) {
+function buildUSFCRFormattingRequests(structure) {
   const requests = [];
   let currentIndex = 1;
+
+  // USFCR BRAND TYPOGRAPHY SYSTEM
+  // Dark blue for headers: rgb(26, 35, 50) = #1A2332
+  const usfcrDarkBlue = { red: 0.102, green: 0.137, blue: 0.196 };
+  const bodyGray = { red: 0.15, green: 0.15, blue: 0.15 };
 
   const styles = {
     heading1: {
       fontSize: 18,
       bold: true,
-      color: { red: 0.1, green: 0.16, blue: 0.2 },
+      fontFamily: 'Montserrat',
+      color: usfcrDarkBlue,
       lineSpacing: 120,
       spaceAbove: 0,
       spaceBelow: 16
@@ -80,7 +86,8 @@ function buildEnhancedFormattingRequests(structure) {
     heading2: {
       fontSize: 14,
       bold: true,
-      color: { red: 0.15, green: 0.15, blue: 0.15 },
+      fontFamily: 'Montserrat',
+      color: usfcrDarkBlue,
       lineSpacing: 130,
       spaceAbove: 18,
       spaceBelow: 10
@@ -88,7 +95,8 @@ function buildEnhancedFormattingRequests(structure) {
     heading3: {
       fontSize: 12,
       bold: true,
-      color: { red: 0.25, green: 0.25, blue: 0.25 },
+      fontFamily: 'Montserrat',
+      color: usfcrDarkBlue,
       lineSpacing: 130,
       spaceAbove: 14,
       spaceBelow: 8
@@ -96,7 +104,8 @@ function buildEnhancedFormattingRequests(structure) {
     body: {
       fontSize: 11,
       bold: false,
-      color: { red: 0.15, green: 0.15, blue: 0.15 },
+      fontFamily: 'Avenir',
+      color: bodyGray,
       lineSpacing: 160,
       spaceAbove: 0,
       spaceBelow: 12
@@ -142,7 +151,7 @@ function buildEnhancedFormattingRequests(structure) {
           fontSize: { magnitude: style.fontSize, unit: 'PT' },
           bold: style.bold,
           weightedFontFamily: {
-            fontFamily: 'Roboto',
+            fontFamily: style.fontFamily,
             weight: style.bold ? 600 : 400
           },
           foregroundColor: {
