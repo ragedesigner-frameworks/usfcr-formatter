@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     const doc = await createResponse.json();
     const documentId = doc.documentId;
-    const requests = buildFormattingRequests(structure);
+    const requests = buildEnhancedFormattingRequests(structure);
 
     const updateResponse = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
       method: 'POST',
@@ -64,19 +64,70 @@ export default async function handler(req, res) {
   }
 }
 
-function buildFormattingRequests(structure) {
+function buildEnhancedFormattingRequests(structure) {
   const requests = [];
   let currentIndex = 1;
+
   const styles = {
-    heading1: { fontSize: 14, bold: true, color: { red: 0.1, green: 0.16, blue: 0.2 } },
-    heading2: { fontSize: 12, bold: true, color: { red: 0.2, green: 0.2, blue: 0.2 } },
-    heading3: { fontSize: 11, bold: true, color: { red: 0.3, green: 0.3, blue: 0.3 } },
-    body: { fontSize: 11, bold: false, color: { red: 0.18, green: 0.18, blue: 0.18 } }
+    heading1: {
+      fontSize: 18,
+      bold: true,
+      color: { red: 0.1, green: 0.16, blue: 0.2 },
+      lineSpacing: 120,
+      spaceAbove: 0,
+      spaceBelow: 16
+    },
+    heading2: {
+      fontSize: 14,
+      bold: true,
+      color: { red: 0.15, green: 0.15, blue: 0.15 },
+      lineSpacing: 130,
+      spaceAbove: 18,
+      spaceBelow: 10
+    },
+    heading3: {
+      fontSize: 12,
+      bold: true,
+      color: { red: 0.25, green: 0.25, blue: 0.25 },
+      lineSpacing: 130,
+      spaceAbove: 14,
+      spaceBelow: 8
+    },
+    body: {
+      fontSize: 11,
+      bold: false,
+      color: { red: 0.15, green: 0.15, blue: 0.15 },
+      lineSpacing: 160,
+      spaceAbove: 0,
+      spaceBelow: 12
+    }
   };
+
+  requests.push({
+    updateDocumentStyle: {
+      documentStyle: {
+        marginTop: { magnitude: 72, unit: 'PT' },
+        marginBottom: { magnitude: 72, unit: 'PT' },
+        marginLeft: { magnitude: 90, unit: 'PT' },
+        marginRight: { magnitude: 90, unit: 'PT' },
+        defaultHeaderId: '',
+        defaultFooterId: ''
+      },
+      fields: 'marginTop,marginBottom,marginLeft,marginRight'
+    }
+  });
+
   structure.forEach((element) => {
     const text = element.text + '\n';
     const textLength = text.length;
-    requests.push({ insertText: { text: text, location: { index: currentIndex } } });
+
+    requests.push({
+      insertText: {
+        text: text,
+        location: { index: currentIndex }
+      }
+    });
+
     let style;
     if (element.type === 'heading') {
       const styleKey = element.level === 1 ? 'heading1' : element.level === 2 ? 'heading2' : 'heading3';
@@ -84,31 +135,51 @@ function buildFormattingRequests(structure) {
     } else {
       style = styles.body;
     }
+
     requests.push({
       updateTextStyle: {
         textStyle: {
           fontSize: { magnitude: style.fontSize, unit: 'PT' },
           bold: style.bold,
-          foregroundColor: { color: { rgbColor: style.color } }
+          weightedFontFamily: {
+            fontFamily: 'Roboto',
+            weight: style.bold ? 600 : 400
+          },
+          foregroundColor: {
+            color: {
+              rgbColor: style.color
+            }
+          }
         },
-        range: { startIndex: currentIndex, endIndex: currentIndex + textLength - 1 },
-        fields: 'fontSize,bold,foregroundColor'
+        range: {
+          startIndex: currentIndex,
+          endIndex: currentIndex + textLength - 1
+        },
+        fields: 'fontSize,bold,weightedFontFamily,foregroundColor'
       }
     });
-    const spaceAbove = element.type === 'heading' ? 12 : 0;
-    const spaceBelow = element.type === 'heading' ? 6 : 0;
+
     requests.push({
       updateParagraphStyle: {
         paragraphStyle: {
-          spaceAbove: { magnitude: spaceAbove, unit: 'PT' },
-          spaceBelow: { magnitude: spaceBelow, unit: 'PT' },
-          lineSpacing: 140
+          spaceAbove: { magnitude: style.spaceAbove, unit: 'PT' },
+          spaceBelow: { magnitude: style.spaceBelow, unit: 'PT' },
+          lineSpacing: style.lineSpacing,
+          alignment: 'START',
+          avoidWidowAndOrphan: true,
+          keepLinesTogether: element.type === 'heading',
+          keepWithNext: element.type === 'heading'
         },
-        range: { startIndex: currentIndex, endIndex: currentIndex + textLength },
-        fields: 'spaceAbove,spaceBelow,lineSpacing'
+        range: {
+          startIndex: currentIndex,
+          endIndex: currentIndex + textLength
+        },
+        fields: 'spaceAbove,spaceBelow,lineSpacing,alignment,avoidWidowAndOrphan,keepLinesTogether,keepWithNext'
       }
     });
+
     currentIndex += textLength;
   });
+
   return requests;
 }
