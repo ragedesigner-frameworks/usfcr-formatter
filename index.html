@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USFCR Document Formatter</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #1a2332;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 48px; }
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+        .header p { font-size: 18px; color: #b0b8c0; line-height: 1.6; }
+        .main-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 12px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 16px;
+            font-size: 15px;
+            line-height: 1.6;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        textarea:focus { border-color: #325d74; }
+        .preview-box {
+            margin-top: 24px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: none;
+        }
+        .preview-box.active { display: block; }
+        .preview-box h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a2332;
+        }
+        .preview-item {
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #5a5a5a;
+        }
+        .preview-item .type {
+            display: inline-block;
+            width: 80px;
+            font-weight: 500;
+        }
+        .preview-item.heading .type { color: #325d74; }
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #325d74;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+            display: none;
+        }
+        .btn-primary.active { display: block; }
+        .btn-primary:hover { background-color: #2a4d61; }
+        .btn-primary:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+        .status-message {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .status-message.active { display: block; }
+        .status-message.processing {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #325d74;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .document-link {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 12px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #325d74;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+        .document-link:hover { background-color: #2a4d61; }
+        .footer {
+            margin-top: 48px;
+            text-align: center;
+            font-size: 14px;
+            color: #7a8390;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>USFCR Document Formatter</h1>
+            <p>Professional typography intelligence for your documents</p>
+        </div>
+        <div class="main-card">
+            <div class="form-group">
+                <label for="textInput">Paste your unformatted text</label>
+                <textarea id="textInput" placeholder="Paste your document text here...&#10;&#10;Try using headings like:&#10;# Main Title&#10;## Subheading&#10;&#10;And regular paragraphs for body text."></textarea>
+            </div>
+            <div class="preview-box" id="previewBox">
+                <h3>Detected Structure</h3>
+                <div id="previewContent"></div>
+            </div>
+            <button class="btn-primary" id="formatBtn">Format Document</button>
+            <div class="status-message" id="statusMessage">
+                <div class="spinner"></div>
+                <div id="statusText">Processing...</div>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Powered by systematic typography intelligence</p>
+            <p style="font-size: 12px; margin-top: 8px;">Internal tool for USFCR team</p>
+        </div>
+    </div>
+    <script>
+        const CONFIG = {
+            googleClientId: '104334358770-jsun6ejfhisfsiison0jnqsu2m2oqccu.apps.googleusercontent.com',
+            apiEndpoint: '/api/create-document'
+        };
+        const typographyEngine = {
+            analyzeText(text) {
+                const lines = text.split('\n').filter(line => line.trim());
+                const structure = [];
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    const startsWithHash = trimmed.startsWith('#');
+                    if (startsWithHash) {
+                        const level = trimmed.match(/^#+/)[0].length;
+                        structure.push({ type: 'heading', level: Math.min(level, 3), text: trimmed.replace(/^#+\\s*/, '') });
+                    } else if (trimmed.length < 100 && !trimmed.endsWith('.')) {
+                        structure.push({ type: 'heading', level: 2, text: trimmed });
+                    } else {
+                        structure.push({ type: 'paragraph', text: trimmed });
+                    }
+                });
+                return structure;
+            }
+        };
+        let currentStructure = null;
+        const textInput = document.getElementById('textInput');
+        const previewBox = document.getElementById('previewBox');
+        const previewContent = document.getElementById('previewContent');
+        const formatBtn = document.getElementById('formatBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusText = document.getElementById('statusText');
+        textInput.addEventListener('input', handleTextChange);
+        formatBtn.addEventListener('click', handleFormatDocument);
+        function handleTextChange(e) {
+            const text = e.target.value;
+            if (text.trim()) {
+                currentStructure = typographyEngine.analyzeText(text);
+                renderPreview(currentStructure);
+                previewBox.classList.add('active');
+                formatBtn.classList.add('active');
+            } else {
+                previewBox.classList.remove('active');
+                formatBtn.classList.remove('active');
+            }
+        }
+        function renderPreview(structure) {
+            previewContent.innerHTML = structure.map(element => {
+                const typeText = element.type === 'heading' ? `Heading ${element.level}` : 'Body';
+                const typeClass = element.type === 'heading' ? 'heading' : 'body';
+                const displayText = element.text.substring(0, 50) + (element.text.length > 50 ? '...' : '');
+                return `<div class="preview-item ${typeClass}"><span class="type">${typeText}</span><span>${displayText}</span></div>`;
+            }).join('');
+        }
+        async function handleFormatDocument() {
+            if (!currentStructure) { alert('Please paste some text first'); return; }
+            try {
+                formatBtn.disabled = true;
+                statusMessage.className = 'status-message active processing';
+                statusText.innerHTML = '<div class="spinner"></div>Connecting to Google...';
+                const accessToken = await getGoogleAccessToken();
+                if (!accessToken) throw new Error('Google authorization cancelled');
+                statusText.innerHTML = '<div class="spinner"></div>Creating your document...';
+                const response = await fetch(CONFIG.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: accessToken, structure: currentStructure, title: 'Formatted Document' })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    statusMessage.className = 'status-message active success';
+                    statusText.innerHTML = `✓ Document created successfully!<br><a href="${result.url}" target="_blank" class="document-link">Open Your Document</a>`;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                statusMessage.className = 'status-message active error';
+                statusText.textContent = 'Error: ' + error.message;
+                formatBtn.disabled = false;
+            }
+        }
+        function getGoogleAccessToken() {
+            return new Promise((resolve, reject) => {
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.googleClientId,
+                    scope: 'https://www.googleapis.com/auth/documents',
+                    callback: (response) => {
+                        if (response.error) { reject(new Error(response.error)); }
+                        else { resolve(response.access_token); }
+                    },
+                });
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            });
+        }
+    </script>
+</body>
+</html>
